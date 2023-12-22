@@ -1,5 +1,5 @@
-#ifndef COLORS
-#define COLORS
+#ifndef COLORS_HPP
+#define COLORS_HPP
 
 #include "raylib.h"
 

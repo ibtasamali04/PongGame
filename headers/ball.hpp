@@ -1,5 +1,5 @@
-#ifndef BALL_CPP
-#define BALL_CPP
+#ifndef BALL_HPP
+#define BALL_HPP
 
 #include "raylib.h"
 #include "headers/colors.hpp"
@@ -17,12 +17,18 @@ public:
     float x, y;
     int speed_x, speed_y;
     int radius;
+    Texture2D gameBall;
+
+    void setBallTexture(Texture2D ballTexture)
+    {
+        gameBall = ballTexture;
+    }
 
     void Draw()
     {
-        Texture2D game_ball = LoadTexture("resources/ball 1.png");
+
         DrawCircle(x, y, radius, Yellow);
-        DrawTexture(game_ball, x - 21, y - 21, Yellow);
+        DrawTexture(gameBall, x - 21, y - 21, Yellow);
     }
 
     ScoreUpdate Update()
