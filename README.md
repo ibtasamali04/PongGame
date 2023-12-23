@@ -95,10 +95,19 @@ Welcome to the Pong Game, a classic arcade experience implemented in C++ using t
  
 ## Screenshots
 
+- *Start Window*  
 ![Start](screenshots/start.png)
+
+- *Options Window*
 ![Options](screenshots/options.png)
+
+- *Mode Window*
 ![Modes](screenshots/mode.png)
+
+- *Dificulty Window*
 ![Difficulties](screenshots/difficulty.png)
+
+- Game*
 ![Pong Game](screenshots/pong.gif)
 
 ## Contributing
