@@ -1,24 +1,19 @@
 #include <iostream>
 #include <functional>
 #include <utility>
-
 #include "raylib.h"
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
 
 #include "headers/ball.hpp"
 #include "headers/paddles.hpp"
+#include "headers/rectangles.hpp"
 
-enum GameState
-{
-    LoadingState,
-    InitialState,
-    ModeState,
-    DifficultyState,
-    GameRunningState,
-    OptionsState,
-    PauseState
-};
+float playerSpeed = 10;
+float ballSpeed = 10;
+float instructionTextSpace = 50;
+int score = 10;
+float scoretemp = 10;
 
 enum ButtonState
 {
@@ -26,31 +21,6 @@ enum ButtonState
     HOVER = 1,
     PRESSED = 2
 };
-
-const float SCREEN_WIDTH = 1920;
-const float SCREEN_HEIGHT = 1080;
-const float smallButtonWidth = 130.0f;
-const float largeButtonWidth = 224.0f;
-const float smallButtonFrameHeight = 185.0f / 3;
-const float largeButtonFrameHeight = 318.0f / 3;
-const float listButtonSpace = 50;
-const float buttonWidth = 220;
-const float buttonHeight = 60;
-const int LOADING_DELAY_FRAMES = 15;
-
-Rectangle listButtonRec1 = {SCREEN_WIDTH / 6 - buttonWidth / 2, SCREEN_HEIGHT / 2 + 1 * listButtonSpace, largeButtonWidth, largeButtonFrameHeight};
-Rectangle listButtonRec2 = {SCREEN_WIDTH / 6 - buttonWidth / 2, SCREEN_HEIGHT / 2 + 3 * listButtonSpace, largeButtonWidth, largeButtonFrameHeight};
-Rectangle listButtonRec3 = {SCREEN_WIDTH / 6 - buttonWidth / 2, SCREEN_HEIGHT / 2 + 5 * listButtonSpace, largeButtonWidth, largeButtonFrameHeight};
-Rectangle backButtonRec = {5, 30, smallButtonWidth, smallButtonFrameHeight};
-Rectangle pauseButtonRec = {SCREEN_WIDTH - 245, 30, smallButtonWidth, smallButtonFrameHeight};
-Rectangle musicButtonRec = {SCREEN_WIDTH - 120, 30, smallButtonWidth, smallButtonFrameHeight};
-
-float playerSpeed = 10;
-float ballSpeed = 10;
-float instructionTextSpace = 50;
-int framesCounter = 0;
-int score = 10;
-float scoretemp = 10;
 
 Paddle player1Paddle(KEY_UP, KEY_DOWN);
 Paddle player2Paddle(KEY_W, KEY_S);
@@ -63,7 +33,21 @@ private:
     Texture2D bg;
     Texture2D pong;
     Texture2D ballTexture;
+    Texture2D playButton;
+    Texture2D optionsButton;
+    Texture2D exitButton;
+    Texture2D vsCompButton;
+    Texture2D vsHumanButton;
+    Texture2D endlessButton;
+    Texture2D backButton;
+    Texture2D musicButton;
+    Texture2D guideButton;
+    Texture2D easyButton;
+    Texture2D mediumButton;
+    Texture2D hardButton;
+    Texture2D endles;
     Sound buttonClickSound;
+    Sound jump;
 
 public:
     int optionsTwoPlayerInstructionTextX = 480;
@@ -71,8 +55,9 @@ public:
     int playerScore;
     int cpuScore;
     Ball ball;
-    bool pause;
 
+    bool pauseGame;
+    bool pauseMusic;
     bool isBackButtonPressed;
     bool isMusicButtonPressed;
     bool isGuideButtonPressed;
@@ -88,7 +73,8 @@ public:
 
     Game()
     {
-        pause = false;
+        pauseMusic = false;
+        pauseGame = false;
         playerScore = 0;
         cpuScore = 0;
 
@@ -97,10 +83,25 @@ public:
         SetTargetFPS(60);
         ToggleFullscreen();
 
-        music = LoadMusicStream("resources/music.mp3");
         bg = LoadTexture("resources/bg.png");
         pong = LoadTexture("resources/pong 1.png");
         ballTexture = LoadTexture("resources/pong 2.png");
+        playButton = LoadTexture("resources/play.png");
+        optionsButton = LoadTexture("resources/options.png");
+        exitButton = LoadTexture("resources/exit.png");
+        vsCompButton = LoadTexture("resources/vsComp.png");
+        vsHumanButton = LoadTexture("resources/vsHuman.png");
+        endlessButton = LoadTexture("resources/endless1.png");
+        easyButton = LoadTexture("resources/easy.png");
+        mediumButton = LoadTexture("resources/medium.png");
+        hardButton = LoadTexture("resources/hard.png");
+        backButton = LoadTexture("resources/back.png");
+        musicButton = LoadTexture("resources/music.png");
+        guideButton = LoadTexture("resources/guide.png");
+        endles = LoadTexture("resources/endless.png");
+
+        jump = LoadSound("resources/jump.mp3");
+        music = LoadMusicStream("resources/music.mp3");
         buttonClickSound = LoadSound("resources/buttonfx.wav");
 
         ball.setBallTexture(LoadTexture("resources/ball 1.png"));
@@ -126,8 +127,8 @@ public:
 
     void toggleMusic()
     {
-        pause = !pause;
-        if (pause)
+        pauseMusic = !pauseMusic;
+        if (pauseMusic)
             PauseMusicStream(music);
         else
             ResumeMusicStream(music);
@@ -153,156 +154,161 @@ public:
         cpuPaddle.y = SCREEN_HEIGHT / 2 - cpuPaddle.height / 2;
         cpuPaddle.speed = cpuspeed;
 
-        Sound jump = LoadSound("resources/jump.mp3");
-        Texture2D endles = LoadTexture("resources/endless.png");
-        Texture2D button4 = LoadTexture("resources/back.png");  // Load button 4 texture
-        Texture2D button5 = LoadTexture("resources/music.png"); // Load button 5 texture
-        Texture2D button6 = LoadTexture("resources/pause.png"); // Load button 6 texture
-        Rectangle sourceRec1 = {0, 0, (float)button4.width, smallButtonFrameHeight};
-        Rectangle btnBounds4 = {5, 30, (float)button4.width, smallButtonFrameHeight};
-        Rectangle btnBounds5 = {SCREEN_WIDTH - 120, 30, (float)button5.width, smallButtonFrameHeight};
-        Rectangle btnBounds6 = {SCREEN_WIDTH - 245, 30, (float)button6.width, smallButtonFrameHeight};
-        int btnState4 = 0;       // Button 4 state: 0-NORMAL, 1-MOUSE_HOVER, 2-PRESSED
-        int btnState5 = 0;       // Button 5 state: 0-NORMAL, 1-MOUSE_HOVER, 2-PRESSED
-        int btnState6 = 0;       // Button 6 state: 0-NORMAL, 1-MOUSE_HOVER, 2-PRESSED
-        bool btnAction4 = false; // Button 4 action should be activated
-        bool btnAction5 = false; // Button 5 action should be activated
-        bool btnAction6 = false; // Button 6 action should be activated
+        Rectangle sourceRec1 = {0, 0, (float)backButton.width, smallButtonFrameHeight};
+
+        ButtonState musicButtonState = IDOL;
+        ButtonState guideButtonState = IDOL;
+        ButtonState backButtonState = IDOL;
 
         Vector2 mousePoint = {0.0f, 0.0f};
 
         while (true)
         {
-            mousePoint = GetMousePosition();
-            btnAction4 = false;
-            btnAction5 = false;
-            btnAction6 = false;
-
-            // Check button 4 state
-            if (CheckCollisionPointRec(mousePoint, btnBounds4))
+            if (IsKeyPressed(KEY_P))
             {
-                if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
-                    btnState4 = 2;
+                pauseGame = !pauseGame;
+            }
+
+            if (pauseGame)
+            {
+                pauseScreen();
+            }
+
+            if (!pauseGame)
+            {
+
+                mousePoint = GetMousePosition();
+                isBackButtonPressed = false;
+                isMusicButtonPressed = false;
+                isGuideButtonPressed = false;
+
+                // Check button 4 state
+                if (CheckCollisionPointRec(mousePoint, backButtonRec))
+                {
+                    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
+                        backButtonState = PRESSED;
+                    else
+                        backButtonState = HOVER;
+
+                    if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
+                        isBackButtonPressed = true;
+                }
                 else
-                    btnState4 = 1;
+                {
+                    backButtonState = IDOL;
+                }
 
-                if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
-                    btnAction4 = true;
-            }
-            else
-            {
-                btnState4 = 0;
-            }
+                // Check button 5 state
+                if (CheckCollisionPointRec(mousePoint, musicButtonRec))
+                {
+                    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
+                        musicButtonState = PRESSED;
+                    else
+                        musicButtonState = HOVER;
 
-            // Check button 5 state
-            if (CheckCollisionPointRec(mousePoint, btnBounds5))
-            {
-                if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
-                    btnState5 = 2;
+                    if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
+                        isMusicButtonPressed = true;
+                }
                 else
-                    btnState5 = 1;
+                {
+                    musicButtonState = IDOL;
+                }
 
-                if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
-                    btnAction5 = true;
-            }
-            else
-            {
-                btnState5 = 0;
-            }
+                // Check button 6 state
+                if (CheckCollisionPointRec(mousePoint, guideButtonRec))
+                {
+                    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
+                        guideButtonState = PRESSED;
+                    else
+                        guideButtonState = HOVER;
 
-            // Check button 6 state
-            if (CheckCollisionPointRec(mousePoint, btnBounds6))
-            {
-                if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
-                    btnState6 = 2;
+                    if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
+                        isGuideButtonPressed = true;
+                }
                 else
-                    btnState6 = 1;
+                {
+                    guideButtonState = IDOL;
+                }
 
-                if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
-                    btnAction6 = true;
+                if (isBackButtonPressed)
+                {
+                    PlaySound(buttonClickSound);
+                    break;
+                }
+
+                if (isMusicButtonPressed)
+                {
+                    PlaySound(buttonClickSound);
+                    toggleMusic();
+                }
+
+                if (isGuideButtonPressed)
+                {
+                    PlaySound(buttonClickSound);
+                    guideScreen();
+                }
+
+                BeginDrawing();
+                UpdateMusicStream(music);
+                ResumeMusicStream(music);
+
+                // Updating
+                ScoreUpdate update = ball.Update();
+                if (update == CPU_WON)
+                {
+                    cpuScore++;
+                }
+                else if (update == PLAYER_WON)
+                {
+                    playerScore++;
+                }
+
+                player1Paddle.Update();
+                cpuPaddle.Update(ball.y);
+
+                // Checking for collisions
+                if (CheckCollisionCircleRec({ball.x, ball.y}, ball.radius, {player1Paddle.x, player1Paddle.y, player1Paddle.width, player1Paddle.height}))
+                {
+                    ball.speed_x *= -1;
+                    PlaySound(jump);
+                }
+
+                if (CheckCollisionCircleRec({ball.x, ball.y}, ball.radius, {cpuPaddle.x, cpuPaddle.y, cpuPaddle.width, cpuPaddle.height}))
+                {
+                    ball.speed_x *= -1;
+                    PlaySound(jump);
+                }
+
+                // Drawing
+                ClearBackground(Blue);
+                DrawTexture(endles, 0, 0, GRAY);
+                DrawLine(SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2, SCREEN_HEIGHT, WHITE);
+                ball.Draw();
+                cpuPaddle.Draw();
+                player1Paddle.Draw();
+                DrawText(TextFormat("%i", cpuScore), SCREEN_WIDTH / 4 - 20, 20, 80, WHITE);
+                DrawText(TextFormat("%i", playerScore), 3 * SCREEN_WIDTH / 4 - 20, 20, 80, WHITE);
+
+                // Calculate button 4 frame rectangle to draw depending on button 4 state
+                sourceRec1.y = backButtonState * smallButtonFrameHeight;
+                DrawTextureRec(backButton, sourceRec1, (Vector2){backButtonRec.x, backButtonRec.y}, WHITE); // Draw button 4 frame
+
+                // Calculate button 5 frame rectangle to draw depending on button 5 state
+                sourceRec1.y = musicButtonState * smallButtonFrameHeight;
+                DrawTextureRec(musicButton, sourceRec1, (Vector2){musicButtonRec.x, musicButtonRec.y}, WHITE); // Draw button 5 frame
+
+                // Calculate button 6 frame rectangle to draw depending on button 6 state
+                sourceRec1.y = guideButtonState * smallButtonFrameHeight;
+                DrawTextureRec(guideButton, sourceRec1, (Vector2){guideButtonRec.x, guideButtonRec.y}, WHITE); // Draw button 6 frame
+
+                if (cpuScore >= score || playerScore >= score)
+                {
+
+                    versesComputerWinScreen();
+                }
+
+                EndDrawing();
             }
-            else
-            {
-                btnState6 = 0;
-            }
-
-            if (btnAction4)
-            {
-                PlaySound(buttonClickSound);
-                break;
-            }
-
-            if (btnAction5)
-            {
-                PlaySound(buttonClickSound);
-                toggleMusic();
-            }
-
-            if (btnAction6)
-            {
-                PlaySound(buttonClickSound);
-                guideScreen();
-            }
-
-            BeginDrawing();
-            UpdateMusicStream(music);
-
-            // Updating
-            ScoreUpdate update = ball.Update();
-            if (update == CPU_WON)
-            {
-                cpuScore++;
-            }
-            else if (update == PLAYER_WON)
-            {
-                playerScore++;
-            }
-
-            player1Paddle.Update();
-            cpuPaddle.Update(ball.y);
-
-            // Checking for collisions
-            if (CheckCollisionCircleRec({ball.x, ball.y}, ball.radius, {player1Paddle.x, player1Paddle.y, player1Paddle.width, player1Paddle.height}))
-            {
-                ball.speed_x *= -1;
-                PlaySound(jump);
-            }
-
-            if (CheckCollisionCircleRec({ball.x, ball.y}, ball.radius, {cpuPaddle.x, cpuPaddle.y, cpuPaddle.width, cpuPaddle.height}))
-            {
-                ball.speed_x *= -1;
-                PlaySound(jump);
-            }
-
-            // Drawing
-            ClearBackground(Blue);
-            DrawTexture(endles, 0, 0, GRAY);
-            DrawLine(SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2, SCREEN_HEIGHT, WHITE);
-            ball.Draw();
-            cpuPaddle.Draw();
-            player1Paddle.Draw();
-            DrawText(TextFormat("%i", cpuScore), SCREEN_WIDTH / 4 - 20, 20, 80, WHITE);
-            DrawText(TextFormat("%i", playerScore), 3 * SCREEN_WIDTH / 4 - 20, 20, 80, WHITE);
-
-            // Calculate button 4 frame rectangle to draw depending on button 4 state
-            sourceRec1.y = btnState4 * smallButtonFrameHeight;
-            DrawTextureRec(button4, sourceRec1, (Vector2){btnBounds4.x, btnBounds4.y}, WHITE); // Draw button 4 frame
-
-            // Calculate button 5 frame rectangle to draw depending on button 5 state
-            sourceRec1.y = btnState5 * smallButtonFrameHeight;
-            DrawTextureRec(button5, sourceRec1, (Vector2){btnBounds5.x, btnBounds5.y}, WHITE); // Draw button 5 frame
-
-            // Calculate button 6 frame rectangle to draw depending on button 6 state
-            sourceRec1.y = btnState6 * smallButtonFrameHeight;
-            DrawTextureRec(button6, sourceRec1, (Vector2){btnBounds6.x, btnBounds6.y}, WHITE); // Draw button 6 frame
-
-            if (cpuScore >= score || playerScore >= score)
-            {
-
-                versesComputerWinScreen();
-            }
-
-            EndDrawing();
         }
     }
 
@@ -327,149 +333,151 @@ public:
         cpuPaddle.y = SCREEN_HEIGHT / 2 - cpuPaddle.height / 2;
         cpuPaddle.speed = cpuspeed;
 
-        Sound jump = LoadSound("resources/jump.mp3");
-        Texture2D endles = LoadTexture("resources/endless.png");
-        Sound fxButton = LoadSound("resources/buttonfx.wav");   // Load button sound
-        Texture2D button4 = LoadTexture("resources/back.png");  // Load button 4 texture
-        Texture2D button5 = LoadTexture("resources/music.png"); // Load button 5 texture
-        Texture2D button6 = LoadTexture("resources/pause.png"); // Load button 6 texture
+        Rectangle sourceRec1 = {0, 0, (float)backButton.width, smallButtonFrameHeight};
 
-        Rectangle sourceRec1 = {0, 0, (float)button4.width, smallButtonFrameHeight};
-        Rectangle btnBounds4 = {5, 30, (float)button4.width, smallButtonFrameHeight};
-        Rectangle btnBounds5 = {SCREEN_WIDTH - 120, 30, (float)button5.width, smallButtonFrameHeight};
-        Rectangle btnBounds6 = {SCREEN_WIDTH - 245, 30, (float)button6.width, smallButtonFrameHeight};
-        int btnState4 = 0;       // Button 4 state: 0-NORMAL, 1-MOUSE_HOVER, 2-PRESSED
-        int btnState5 = 0;       // Button 5 state: 0-NORMAL, 1-MOUSE_HOVER, 2-PRESSED
-        int btnState6 = 0;       // Button 6 state: 0-NORMAL, 1-MOUSE_HOVER, 2-PRESSED
-        bool btnAction4 = false; // Button 4 action should be activated
-        bool btnAction5 = false; // Button 5 action should be activated
-        bool btnAction6 = false; // Button 6 action should be activated
+        ButtonState backButtonState = IDOL;
+        ButtonState musicButtonState = IDOL;
+        ButtonState guideButtonState = IDOL;
 
         Vector2 mousePoint = {0.0f, 0.0f};
 
         while (true)
         {
-
-            mousePoint = GetMousePosition();
-            btnAction4 = false;
-            btnAction5 = false;
-            btnAction6 = false;
-
-            // Check button 4 state
-            if (CheckCollisionPointRec(mousePoint, btnBounds4))
+            if (IsKeyPressed(KEY_P))
             {
-                if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
-                    btnState4 = 2;
+                pauseGame = !pauseGame;
+            }
+
+            if (pauseGame)
+            {
+                pauseScreen();
+            }
+
+            if (!pauseGame)
+            {
+
+                mousePoint = GetMousePosition();
+                isBackButtonPressed = false;
+                isMusicButtonPressed = false;
+                isGuideButtonPressed = false;
+
+                // Check button 4 state
+                if (CheckCollisionPointRec(mousePoint, backButtonRec))
+                {
+                    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
+                        backButtonState = PRESSED;
+                    else
+                        backButtonState = HOVER;
+
+                    if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
+                        isBackButtonPressed = true;
+                }
                 else
-                    btnState4 = 1;
+                    backButtonState = IDOL;
 
-                if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
-                    btnAction4 = true;
-            }
-            else
-                btnState4 = 0;
+                // Check button 5 state
+                if (CheckCollisionPointRec(mousePoint, musicButtonRec))
+                {
+                    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
+                        musicButtonState = PRESSED;
+                    else
+                        musicButtonState = HOVER;
 
-            // Check button 5 state
-            if (CheckCollisionPointRec(mousePoint, btnBounds5))
-            {
-                if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
-                    btnState5 = 2;
+                    if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
+                        isMusicButtonPressed = true;
+                }
                 else
-                    btnState5 = 1;
+                    musicButtonState = IDOL;
 
-                if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
-                    btnAction5 = true;
-            }
-            else
-                btnState5 = 0;
+                // Check button 6 state
+                if (CheckCollisionPointRec(mousePoint, guideButtonRec))
+                {
+                    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
+                        guideButtonState = PRESSED;
+                    else
+                        guideButtonState = HOVER;
 
-            // Check button 6 state
-            if (CheckCollisionPointRec(mousePoint, btnBounds6))
-            {
-                if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
-                    btnState6 = 2;
+                    if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
+                        isGuideButtonPressed = true;
+                }
                 else
-                    btnState6 = 1;
+                    guideButtonState = IDOL;
 
-                if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
-                    btnAction6 = true;
+                if (isBackButtonPressed)
+                {
+                    PlaySound(buttonClickSound);
+                    break;
+                }
+
+                if (isMusicButtonPressed)
+                {
+                    PlaySound(buttonClickSound);
+                    toggleMusic();
+                }
+
+                if (isGuideButtonPressed)
+                {
+                    PlaySound(buttonClickSound);
+                    guideScreen();
+                }
+
+                BeginDrawing();
+
+                UpdateMusicStream(music);
+                ResumeMusicStream(music);
+
+                // Updating
+
+                ScoreUpdate update = ball.Update();
+                if (update == CPU_WON)
+                {
+                    cpuScore++;
+                }
+                else if (update == PLAYER_WON)
+                {
+                    playerScore++;
+                }
+
+                player1Paddle.Update();
+                cpuPaddle.Update(ball.y);
+
+                // Checking for collisions
+                if (CheckCollisionCircleRec({ball.x, ball.y}, ball.radius, {player1Paddle.x, player1Paddle.y, player1Paddle.width, player1Paddle.height}))
+                {
+                    ball.speed_x *= -1;
+                    PlaySound(jump);
+                }
+
+                if (CheckCollisionCircleRec({ball.x, ball.y}, ball.radius, {cpuPaddle.x, cpuPaddle.y, cpuPaddle.width, cpuPaddle.height}))
+                {
+                    ball.speed_x *= -1;
+                    PlaySound(jump);
+                }
+
+                // Drawing
+                ClearBackground(Blue);
+                DrawTexture(endles, 0, 0, GRAY);
+                DrawLine(SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2, SCREEN_HEIGHT, WHITE);
+                ball.Draw();
+                cpuPaddle.Draw();
+                player1Paddle.Draw();
+                DrawText(TextFormat("%i", cpuScore), SCREEN_WIDTH / 4 - 20, 20, 80, WHITE);
+                DrawText(TextFormat("%i", playerScore), 3 * SCREEN_WIDTH / 4 - 20, 20, 80, WHITE);
+
+                // Calculate button 4 frame rectangle to draw depending on button 4 state
+                sourceRec1.y = backButtonState * smallButtonFrameHeight;
+                DrawTextureRec(backButton, sourceRec1, (Vector2){backButtonRec.x, backButtonRec.y}, WHITE); // Draw button 4 frame
+
+                // Calculate button 5 frame rectangle to draw depending on button 5 state
+                sourceRec1.y = musicButtonState * smallButtonFrameHeight;
+                DrawTextureRec(musicButton, sourceRec1, (Vector2){musicButtonRec.x, musicButtonRec.y}, WHITE); // Draw button 5 frame
+
+                // Calculate button 6 frame rectangle to draw depending on button 6 state
+                sourceRec1.y = guideButtonState * smallButtonFrameHeight;
+                DrawTextureRec(guideButton, sourceRec1, (Vector2){guideButtonRec.x, guideButtonRec.y}, WHITE); // Draw button 6 frame
+
+                EndDrawing();
             }
-            else
-                btnState6 = 0;
-
-            if (btnAction4)
-            {
-                PlaySound(fxButton);
-                break;
-            }
-
-            if (btnAction5)
-            {
-                PlaySound(fxButton);
-                toggleMusic();
-            }
-
-            if (btnAction6)
-            {
-                PlaySound(fxButton);
-                guideScreen();
-            }
-
-            BeginDrawing();
-
-            UpdateMusicStream(music);
-
-            // Updating
-
-            ScoreUpdate update = ball.Update();
-            if (update == CPU_WON)
-            {
-                cpuScore++;
-            }
-            else if (update == PLAYER_WON)
-            {
-                playerScore++;
-            }
-
-            player1Paddle.Update();
-            cpuPaddle.Update(ball.y);
-
-            // Checking for collisions
-            if (CheckCollisionCircleRec({ball.x, ball.y}, ball.radius, {player1Paddle.x, player1Paddle.y, player1Paddle.width, player1Paddle.height}))
-            {
-                ball.speed_x *= -1;
-                PlaySound(jump);
-            }
-
-            if (CheckCollisionCircleRec({ball.x, ball.y}, ball.radius, {cpuPaddle.x, cpuPaddle.y, cpuPaddle.width, cpuPaddle.height}))
-            {
-                ball.speed_x *= -1;
-                PlaySound(jump);
-            }
-
-            // Drawing
-            ClearBackground(Blue);
-            DrawTexture(endles, 0, 0, GRAY);
-            DrawLine(SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2, SCREEN_HEIGHT, WHITE);
-            ball.Draw();
-            cpuPaddle.Draw();
-            player1Paddle.Draw();
-            DrawText(TextFormat("%i", cpuScore), SCREEN_WIDTH / 4 - 20, 20, 80, WHITE);
-            DrawText(TextFormat("%i", playerScore), 3 * SCREEN_WIDTH / 4 - 20, 20, 80, WHITE);
-
-            // Calculate button 4 frame rectangle to draw depending on button 4 state
-            sourceRec1.y = btnState4 * smallButtonFrameHeight;
-            DrawTextureRec(button4, sourceRec1, (Vector2){btnBounds4.x, btnBounds4.y}, WHITE); // Draw button 4 frame
-
-            // Calculate button 5 frame rectangle to draw depending on button 5 state
-            sourceRec1.y = btnState5 * smallButtonFrameHeight;
-            DrawTextureRec(button5, sourceRec1, (Vector2){btnBounds5.x, btnBounds5.y}, WHITE); // Draw button 5 frame
-
-            // Calculate button 6 frame rectangle to draw depending on button 6 state
-            sourceRec1.y = btnState6 * smallButtonFrameHeight;
-            DrawTextureRec(button6, sourceRec1, (Vector2){btnBounds6.x, btnBounds6.y}, WHITE); // Draw button 6 frame
-
-            EndDrawing();
         }
     }
 
@@ -493,154 +501,156 @@ public:
         player2Paddle.y = SCREEN_HEIGHT / 2 - player2Paddle.height / 2;
         player2Paddle.speed = playerSpeed;
 
-        Sound jump = LoadSound("resources/jump.mp3");
-        Sound fxButton = LoadSound("resources/buttonfx.wav"); // Load button sound
-        Texture2D endles = LoadTexture("resources/endless.png");
-        Texture2D button4 = LoadTexture("resources/back.png");  // Load button 4 texture
-        Texture2D button5 = LoadTexture("resources/music.png"); // Load button 5 texture
-        Texture2D button6 = LoadTexture("resources/pause.png"); // Load button 6 texture
+        Rectangle sourceRec1 = {0, 0, (float)backButton.width, smallButtonFrameHeight};
 
-        Rectangle sourceRec1 = {0, 0, (float)button4.width, smallButtonFrameHeight};
-        Rectangle btnBounds4 = {5, 30, (float)button4.width, smallButtonFrameHeight};
-        Rectangle btnBounds5 = {SCREEN_WIDTH - 120, 30, (float)button5.width, smallButtonFrameHeight};
-        Rectangle btnBounds6 = {SCREEN_WIDTH - 245, 30, (float)button6.width, smallButtonFrameHeight};
-        int btnState4 = 0;       // Button 4 state: 0-NORMAL, 1-MOUSE_HOVER, 2-PRESSED
-        int btnState5 = 0;       // Button 5 state: 0-NORMAL, 1-MOUSE_HOVER, 2-PRESSED
-        int btnState6 = 0;       // Button 6 state: 0-NORMAL, 1-MOUSE_HOVER, 2-PRESSED
-        bool btnAction4 = false; // Button 4 action should be activated
-        bool btnAction5 = false; // Button 5 action should be activated
-        bool btnAction6 = false; // Button 6 action should be activated
+        ButtonState backButtonState = IDOL;
+        ButtonState musicButtonState = IDOL;
+        ButtonState guideButtonState = IDOL;
 
         Vector2 mousePoint = {0.0f, 0.0f};
 
         while (true)
         {
-
-            mousePoint = GetMousePosition();
-            btnAction4 = false;
-            btnAction5 = false;
-            btnAction6 = false;
-
-            // Check button 4 state
-            if (CheckCollisionPointRec(mousePoint, btnBounds4))
+            if (IsKeyPressed(KEY_P))
             {
-                if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
-                    btnState4 = 2;
+                pauseGame = !pauseGame;
+            }
+
+            if (pauseGame)
+            {
+                pauseScreen();
+            }
+
+            if (!pauseGame)
+            {
+
+                mousePoint = GetMousePosition();
+                isBackButtonPressed = false;
+                isMusicButtonPressed = false;
+                isGuideButtonPressed = false;
+
+                // Check button 4 state
+                if (CheckCollisionPointRec(mousePoint, backButtonRec))
+                {
+                    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
+                        backButtonState = PRESSED;
+                    else
+                        backButtonState = HOVER;
+
+                    if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
+                        isBackButtonPressed = true;
+                }
                 else
-                    btnState4 = 1;
+                    backButtonState = IDOL;
 
-                if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
-                    btnAction4 = true;
-            }
-            else
-                btnState4 = 0;
+                // Check button 5 state
+                if (CheckCollisionPointRec(mousePoint, musicButtonRec))
+                {
+                    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
+                        musicButtonState = PRESSED;
+                    else
+                        musicButtonState = HOVER;
 
-            // Check button 5 state
-            if (CheckCollisionPointRec(mousePoint, btnBounds5))
-            {
-                if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
-                    btnState5 = 2;
+                    if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
+                        isMusicButtonPressed = true;
+                }
                 else
-                    btnState5 = 1;
+                    musicButtonState = IDOL;
 
-                if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
-                    btnAction5 = true;
-            }
-            else
-                btnState5 = 0;
+                // Check button 6 state
+                if (CheckCollisionPointRec(mousePoint, guideButtonRec))
+                {
+                    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
+                        guideButtonState = PRESSED;
+                    else
+                        guideButtonState = HOVER;
 
-            // Check button 6 state
-            if (CheckCollisionPointRec(mousePoint, btnBounds6))
-            {
-                if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
-                    btnState6 = 2;
+                    if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
+                        isGuideButtonPressed = true;
+                }
                 else
-                    btnState6 = 1;
+                    guideButtonState = IDOL;
 
-                if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
-                    btnAction6 = true;
+                if (isBackButtonPressed)
+                {
+                    PlaySound(buttonClickSound);
+                    break;
+                }
+
+                if (isMusicButtonPressed)
+                {
+                    PlaySound(buttonClickSound);
+                    toggleMusic();
+                }
+
+                if (isGuideButtonPressed)
+                {
+                    PlaySound(buttonClickSound);
+                    guideScreen();
+                }
+
+                BeginDrawing();
+                UpdateMusicStream(music);
+                ResumeMusicStream(music);
+
+                // Updating
+
+                ScoreUpdate update = ball.Update();
+                if (update == CPU_WON)
+                {
+                    cpuScore++;
+                }
+                else if (update == PLAYER_WON)
+                {
+                    playerScore++;
+                }
+
+                player1Paddle.Update();
+                player2Paddle.Update();
+
+                // Checking for collisions
+                if (CheckCollisionCircleRec({ball.x, ball.y}, ball.radius, {player1Paddle.x, player1Paddle.y, player1Paddle.width, player1Paddle.height}))
+                {
+                    ball.speed_x *= -1;
+                    PlaySound(jump);
+                }
+
+                if (CheckCollisionCircleRec({ball.x, ball.y}, ball.radius, {player2Paddle.x, player2Paddle.y, player2Paddle.width, player2Paddle.height}))
+                {
+                    ball.speed_x *= -1;
+                    PlaySound(jump);
+                }
+
+                // Drawing
+                ClearBackground(Blue);
+                DrawTexture(endles, 0, 0, GRAY);
+                DrawLine(SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2, SCREEN_HEIGHT, WHITE);
+
+                ball.Draw();
+                player2Paddle.Draw();
+                player1Paddle.Draw();
+                DrawText(TextFormat("%i", cpuScore), SCREEN_WIDTH / 4 - 20, 20, 80, WHITE);
+                DrawText(TextFormat("%i", playerScore), 3 * SCREEN_WIDTH / 4 - 20, 20, 80, WHITE);
+
+                // Calculate button 4 frame rectangle to draw depending on button 4 state
+                sourceRec1.y = backButtonState * smallButtonFrameHeight;
+                DrawTextureRec(backButton, sourceRec1, (Vector2){backButtonRec.x, backButtonRec.y}, WHITE); // Draw button 4 frame
+
+                // Calculate button 5 frame rectangle to draw depending on button 5 state
+                sourceRec1.y = musicButtonState * smallButtonFrameHeight;
+                DrawTextureRec(musicButton, sourceRec1, (Vector2){musicButtonRec.x, musicButtonRec.y}, WHITE); // Draw button 5 frame
+
+                // Calculate button 6 frame rectangle to draw depending on button 6 state
+                sourceRec1.y = guideButtonState * smallButtonFrameHeight;
+                DrawTextureRec(guideButton, sourceRec1, (Vector2){guideButtonRec.x, guideButtonRec.y}, WHITE); // Draw button 6 frame
+
+                if (cpuScore >= score || playerScore >= score)
+                {
+                    versesHumanWinScreen();
+                }
+
+                EndDrawing();
             }
-            else
-                btnState6 = 0;
-
-            if (btnAction4)
-            {
-                PlaySound(fxButton);
-                break;
-            }
-
-            if (btnAction5)
-            {
-                PlaySound(fxButton);
-                toggleMusic();
-            }
-
-            if (btnAction6)
-            {
-                PlaySound(fxButton);
-                guideScreen();
-            }
-
-            BeginDrawing();
-            UpdateMusicStream(music);
-
-            // Updating
-
-            ScoreUpdate update = ball.Update();
-            if (update == CPU_WON)
-            {
-                cpuScore++;
-            }
-            else if (update == PLAYER_WON)
-            {
-                playerScore++;
-            }
-
-            player1Paddle.Update();
-            player2Paddle.Update();
-
-            // Checking for collisions
-            if (CheckCollisionCircleRec({ball.x, ball.y}, ball.radius, {player1Paddle.x, player1Paddle.y, player1Paddle.width, player1Paddle.height}))
-            {
-                ball.speed_x *= -1;
-                PlaySound(jump);
-            }
-
-            if (CheckCollisionCircleRec({ball.x, ball.y}, ball.radius, {player2Paddle.x, player2Paddle.y, player2Paddle.width, player2Paddle.height}))
-            {
-                ball.speed_x *= -1;
-                PlaySound(jump);
-            }
-
-            // Drawing
-            ClearBackground(Blue);
-            DrawTexture(endles, 0, 0, GRAY);
-            DrawLine(SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2, SCREEN_HEIGHT, WHITE);
-
-            ball.Draw();
-            player2Paddle.Draw();
-            player1Paddle.Draw();
-            DrawText(TextFormat("%i", cpuScore), SCREEN_WIDTH / 4 - 20, 20, 80, WHITE);
-            DrawText(TextFormat("%i", playerScore), 3 * SCREEN_WIDTH / 4 - 20, 20, 80, WHITE);
-
-            // Calculate button 4 frame rectangle to draw depending on button 4 state
-            sourceRec1.y = btnState4 * smallButtonFrameHeight;
-            DrawTextureRec(button4, sourceRec1, (Vector2){btnBounds4.x, btnBounds4.y}, WHITE); // Draw button 4 frame
-
-            // Calculate button 5 frame rectangle to draw depending on button 5 state
-            sourceRec1.y = btnState5 * smallButtonFrameHeight;
-            DrawTextureRec(button5, sourceRec1, (Vector2){btnBounds5.x, btnBounds5.y}, WHITE); // Draw button 5 frame
-
-            // Calculate button 6 frame rectangle to draw depending on button 6 state
-            sourceRec1.y = btnState6 * smallButtonFrameHeight;
-            DrawTextureRec(button6, sourceRec1, (Vector2){btnBounds6.x, btnBounds6.y}, WHITE); // Draw button 6 frame
-
-            if (cpuScore >= score || playerScore >= score)
-            {
-                versesHumanWinScreen();
-            }
-
-            EndDrawing();
         }
     }
 
@@ -685,8 +695,7 @@ public:
 
     void guideScreen()
     {
-        Texture2D bg = LoadTexture("resources/bg.png");
-        while (true)
+        while (!WindowShouldClose())
         {
             BeginDrawing();
             UpdateMusicStream(music);
@@ -714,6 +723,14 @@ public:
         }
     }
 
+    void pauseScreen()
+    {
+        BeginDrawing();
+        PauseMusicStream(music);
+        DrawText("GAME IS PAUSED", SCREEN_WIDTH / 2 - MeasureText("GAME IS PAUSED", 50) / 2, SCREEN_HEIGHT / 2, 50, WHITE);
+        EndDrawing();
+    }
+
     void optionsScreen()
     {
 
@@ -722,37 +739,33 @@ public:
         Rectangle scoreButtonRec = {SCREEN_WIDTH - 850, 765, 200, 30};
         Rectangle resetButtonRec = {SCREEN_WIDTH - 790, 835, 80, 40};
 
-        Texture2D bg = LoadTexture("resources/bg.png");
-        Texture2D button4 = LoadTexture("resources/back.png"); // Load button 4 texture
+        Rectangle sourceRec1 = {0, 0, (float)backButton.width, smallButtonFrameHeight};
 
-        Rectangle sourceRec1 = {0, 0, (float)button4.width, smallButtonFrameHeight};
-        Rectangle btnBounds4 = {50, 30, (float)button4.width, smallButtonFrameHeight};
-        int btnState4 = 0;       // Button 4 state: 0-NORMAL, 1-MOUSE_HOVER, 2-PRESSED
-        bool btnAction4 = false; // Button 4 action should be activated
+        ButtonState backButtonState = IDOL; // Button 4 state: 0-NORMAL, 1-MOUSE_HOVER, 2-PRESSED
         Vector2 mousePoint = {0.0f, 0.0f};
 
-        while (true)
+        while (!WindowShouldClose())
         {
             BeginDrawing();
             UpdateMusicStream(music);
 
             mousePoint = GetMousePosition();
-            btnAction4 = false;
+            isBackButtonPressed = false;
             // Check button 4 state
-            if (CheckCollisionPointRec(mousePoint, btnBounds4))
+            if (CheckCollisionPointRec(mousePoint, backButtonRec))
             {
                 if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
-                    btnState4 = 2;
+                    backButtonState = PRESSED;
                 else
-                    btnState4 = 1;
+                    backButtonState = HOVER;
 
                 if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
-                    btnAction4 = true;
+                    isBackButtonPressed = true;
             }
             else
-                btnState4 = 0;
+                backButtonState = IDOL;
 
-            if (btnAction4)
+            if (isBackButtonPressed)
             {
                 PlaySound(buttonClickSound);
                 break;
@@ -776,8 +789,8 @@ public:
             DrawText(TextFormat("%i", score), SCREEN_WIDTH - 630, 770, 20, WHITE);
 
             // Calculate button 4 frame rectangle to draw depending on button 4 state
-            sourceRec1.y = btnState4 * smallButtonFrameHeight;
-            DrawTextureRec(button4, sourceRec1, (Vector2){btnBounds4.x, btnBounds4.y}, WHITE); // Draw button 4 frame
+            sourceRec1.y = backButtonState * smallButtonFrameHeight;
+            DrawTextureRec(backButton, sourceRec1, (Vector2){backButtonRec.x, backButtonRec.y}, WHITE); // Draw button 4 frame
 
             optionsTwoPlayerInstructionTextX += optionsTwoPlayerInstructionTextSpeedX;
 
@@ -819,7 +832,7 @@ public:
         if (playerScore >= score)
         {
 
-            while (true)
+            while (!WindowShouldClose())
             {
 
                 BeginDrawing();
@@ -877,7 +890,7 @@ public:
         if (playerScore >= score)
         {
 
-            while (true)
+            while (!WindowShouldClose())
             {
 
                 BeginDrawing();
@@ -927,38 +940,15 @@ public:
 
     void compDifficulity()
     {
-        Texture2D button1 = LoadTexture("resources/easy.png");   // Load button 1 texture
-        Texture2D button2 = LoadTexture("resources/medium.png"); // Load button 2 texture
-        Texture2D button3 = LoadTexture("resources/hard.png");   // Load button 3 texture
-        Texture2D button4 = LoadTexture("resources/back.png");   // Load button 4 texture
-        Texture2D button5 = LoadTexture("resources/music.png");  // Load button 5 texture
-        Texture2D button6 = LoadTexture("resources/guide.png");  // Load button 6 texture
+        Rectangle sourceRec = {0, 0, (float)easyButton.width, largeButtonFrameHeight};
+        Rectangle sourceRec1 = {0, 0, (float)backButton.width, smallButtonFrameHeight};
 
-        // Define frame rectangle for drawing
-        Rectangle sourceRec = {0, 0, (float)button1.width, largeButtonFrameHeight};
-        Rectangle sourceRec1 = {0, 0, (float)button4.width, smallButtonFrameHeight};
-
-        // Define button bounds on screen
-        Rectangle btnBounds1 = {SCREEN_WIDTH / 6 - buttonWidth / 2, SCREEN_HEIGHT / 2 + listButtonSpace, (float)button1.width, largeButtonFrameHeight};
-        Rectangle btnBounds2 = {SCREEN_WIDTH / 6 - buttonWidth / 2, SCREEN_HEIGHT / 2 + 3 * listButtonSpace, (float)button2.width, largeButtonFrameHeight};
-        Rectangle btnBounds3 = {SCREEN_WIDTH / 6 - buttonWidth / 2, SCREEN_HEIGHT / 2 + 5 * listButtonSpace, (float)button3.width, largeButtonFrameHeight};
-        Rectangle btnBounds4 = {5, 30, (float)button4.width, smallButtonFrameHeight};
-        Rectangle btnBounds5 = {SCREEN_WIDTH - 120, 30, (float)button5.width, smallButtonFrameHeight};
-        Rectangle btnBounds6 = {SCREEN_WIDTH - 245, 30, (float)button6.width, smallButtonFrameHeight};
-
-        int btnState1 = 0; // Button 1 state: 0-NORMAL, 1-MOUSE_HOVER, 2-PRESSED
-        int btnState2 = 0; // Button 2 state: 0-NORMAL, 1-MOUSE_HOVER, 2-PRESSED
-        int btnState3 = 0; // Button 3 state: 0-NORMAL, 1-MOUSE_HOVER, 2-PRESSED
-        int btnState4 = 0; // Button 4 state: 0-NORMAL, 1-MOUSE_HOVER, 2-PRESSED
-        int btnState5 = 0; // Button 5 state: 0-NORMAL, 1-MOUSE_HOVER, 2-PRESSED
-        int btnState6 = 0; // Button 6 state: 0-NORMAL, 1-MOUSE_HOVER, 2-PRESSED
-
-        bool btnAction1 = false; // Button 1 action should be activated
-        bool btnAction2 = false; // Button 2 action should be activated
-        bool btnAction3 = false; // Button 3 action should be activated
-        bool btnAction4 = false; // Button 4 action should be activated
-        bool btnAction5 = false; // Button 5 action should be activated
-        bool btnAction6 = false; // Button 6 action should be activated
+        ButtonState easyButtonState = IDOL;
+        ButtonState mediumButtonState = IDOL;
+        ButtonState hardButtonState = IDOL;
+        ButtonState backButtonState = IDOL;
+        ButtonState musicButtonState = IDOL;
+        ButtonState guideButtonState = IDOL;
 
         Vector2 mousePoint = {0.0f, 0.0f};
 
@@ -968,131 +958,131 @@ public:
             //----------------------------------------------------------------------------------
             UpdateMusicStream(music);
             mousePoint = GetMousePosition();
-            btnAction1 = false;
-            btnAction2 = false;
-            btnAction3 = false;
-            btnAction4 = false;
-            btnAction5 = false;
-            btnAction6 = false;
+            isEasyButtonPressed = false;
+            isMediumButtonPressed = false;
+            isHardButtonPressed = false;
+            isBackButtonPressed = false;
+            isMusicButtonPressed = false;
+            isGuideButtonPressed = false;
 
             // Check button 1 state
-            if (CheckCollisionPointRec(mousePoint, btnBounds1))
+            if (CheckCollisionPointRec(mousePoint, listButtonRec1))
             {
                 if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
-                    btnState1 = 2;
+                    easyButtonState = PRESSED;
                 else
-                    btnState1 = 1;
+                    easyButtonState = HOVER;
 
                 if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
-                    btnAction1 = true;
+                    isEasyButtonPressed = true;
             }
             else
-                btnState1 = 0;
+                easyButtonState = IDOL;
 
             // Check button 2 state
-            if (CheckCollisionPointRec(mousePoint, btnBounds2))
+            if (CheckCollisionPointRec(mousePoint, listButtonRec2))
             {
                 if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
-                    btnState2 = 2;
+                    mediumButtonState = PRESSED;
                 else
-                    btnState2 = 1;
+                    mediumButtonState = HOVER;
 
                 if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
-                    btnAction2 = true;
+                    isMediumButtonPressed = true;
             }
             else
-                btnState2 = 0;
+                mediumButtonState = IDOL;
 
             // Check button 3 state
-            if (CheckCollisionPointRec(mousePoint, btnBounds3))
+            if (CheckCollisionPointRec(mousePoint, listButtonRec3))
             {
                 if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
-                    btnState3 = 2;
+                    hardButtonState = PRESSED;
                 else
-                    btnState3 = 1;
+                    hardButtonState = HOVER;
 
                 if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
-                    btnAction3 = true;
+                    isHardButtonPressed = true;
             }
             else
-                btnState3 = 0;
+                hardButtonState = IDOL;
 
             // Check button 4 state
-            if (CheckCollisionPointRec(mousePoint, btnBounds4))
+            if (CheckCollisionPointRec(mousePoint, backButtonRec))
             {
                 if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
-                    btnState4 = 2;
+                    backButtonState = PRESSED;
                 else
-                    btnState4 = 1;
+                    backButtonState = HOVER;
 
                 if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
-                    btnAction4 = true;
+                    isBackButtonPressed = true;
             }
             else
-                btnState4 = 0;
+                backButtonState = IDOL;
 
             // Check button 5 state
-            if (CheckCollisionPointRec(mousePoint, btnBounds5))
+            if (CheckCollisionPointRec(mousePoint, musicButtonRec))
             {
                 if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
-                    btnState5 = 2;
+                    musicButtonState = PRESSED;
                 else
-                    btnState5 = 1;
+                    musicButtonState = HOVER;
 
                 if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
-                    btnAction5 = true;
+                    isMusicButtonPressed = true;
             }
             else
-                btnState5 = 0;
+                musicButtonState = IDOL;
 
             // Check button 6 state
-            if (CheckCollisionPointRec(mousePoint, btnBounds6))
+            if (CheckCollisionPointRec(mousePoint, guideButtonRec))
             {
                 if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
-                    btnState6 = 2;
+                    guideButtonState = PRESSED;
                 else
-                    btnState6 = 1;
+                    guideButtonState = HOVER;
 
                 if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
-                    btnAction6 = true;
+                    isGuideButtonPressed = true;
             }
             else
-                btnState6 = 0;
+                guideButtonState = IDOL;
 
-            if (btnAction1)
+            if (isEasyButtonPressed)
             {
                 PlaySound(buttonClickSound);
                 reset();
                 versesComputerMode(10, 10, 10, 8);
             }
 
-            if (btnAction2)
+            if (isMediumButtonPressed)
             {
                 PlaySound(buttonClickSound);
                 reset();
                 versesComputerMode(10, 10, 10, 10);
             }
 
-            if (btnAction3)
+            if (isHardButtonPressed)
             {
                 PlaySound(buttonClickSound);
                 reset();
                 versesComputerMode(12, 12, 11, 11);
             }
 
-            if (btnAction4)
+            if (isBackButtonPressed)
             {
                 PlaySound(buttonClickSound);
                 break;
             }
 
-            if (btnAction5)
+            if (isMusicButtonPressed)
             {
                 PlaySound(buttonClickSound);
                 toggleMusic();
             }
 
-            if (btnAction6)
+            if (isGuideButtonPressed)
             {
                 PlaySound(buttonClickSound);
                 guideScreen();
@@ -1108,28 +1098,28 @@ public:
             DrawText("Select Difficulity", SCREEN_WIDTH / 6 - MeasureText("Select Difficulity", 60) / 2, SCREEN_HEIGHT / 3, 60, Yellow);
 
             // Calculate button 1 frame rectangle to draw depending on button 1 state
-            sourceRec.y = btnState1 * largeButtonFrameHeight;
-            DrawTextureRec(button1, sourceRec, (Vector2){btnBounds1.x, btnBounds1.y}, WHITE); // Draw button 1 frame
+            sourceRec.y = easyButtonState * largeButtonFrameHeight;
+            DrawTextureRec(easyButton, sourceRec, (Vector2){listButtonRec1.x, listButtonRec1.y}, WHITE); // Draw button 1 frame
 
             // Calculate button 2 frame rectangle to draw depending on button 2 state
-            sourceRec.y = btnState2 * largeButtonFrameHeight;
-            DrawTextureRec(button2, sourceRec, (Vector2){btnBounds2.x, btnBounds2.y}, WHITE); // Draw button 2 frame
+            sourceRec.y = mediumButtonState * largeButtonFrameHeight;
+            DrawTextureRec(mediumButton, sourceRec, (Vector2){listButtonRec2.x, listButtonRec2.y}, WHITE); // Draw button 2 frame
 
             // Calculate button 3 frame rectangle to draw depending on button 3 state
-            sourceRec.y = btnState3 * largeButtonFrameHeight;
-            DrawTextureRec(button3, sourceRec, (Vector2){btnBounds3.x, btnBounds3.y}, WHITE); // Draw button 3 frame
+            sourceRec.y = hardButtonState * largeButtonFrameHeight;
+            DrawTextureRec(hardButton, sourceRec, (Vector2){listButtonRec3.x, listButtonRec3.y}, WHITE); // Draw button 3 frame
 
             // Calculate button 4 frame rectangle to draw depending on button 4 state
-            sourceRec1.y = btnState4 * smallButtonFrameHeight;
-            DrawTextureRec(button4, sourceRec1, (Vector2){btnBounds4.x, btnBounds4.y}, WHITE); // Draw button 4 frame
+            sourceRec1.y = backButtonState * smallButtonFrameHeight;
+            DrawTextureRec(backButton, sourceRec1, (Vector2){backButtonRec.x, backButtonRec.y}, WHITE); // Draw button 4 frame
 
             // Calculate button 5 frame rectangle to draw depending on button 5 state
-            sourceRec1.y = btnState5 * smallButtonFrameHeight;
-            DrawTextureRec(button5, sourceRec1, (Vector2){btnBounds5.x, btnBounds5.y}, WHITE); // Draw button 5 frame
+            sourceRec1.y = musicButtonState * smallButtonFrameHeight;
+            DrawTextureRec(musicButton, sourceRec1, (Vector2){musicButtonRec.x, musicButtonRec.y}, WHITE); // Draw button 5 frame
 
             // Calculate button 6 frame rectangle to draw depending on button 6 state
-            sourceRec1.y = btnState6 * smallButtonFrameHeight;
-            DrawTextureRec(button6, sourceRec1, (Vector2){btnBounds6.x, btnBounds6.y}, WHITE); // Draw button 6 frame
+            sourceRec1.y = guideButtonState * smallButtonFrameHeight;
+            DrawTextureRec(guideButton, sourceRec1, (Vector2){guideButtonRec.x, guideButtonRec.y}, WHITE); // Draw button 6 frame
 
             EndDrawing();
         }
@@ -1137,15 +1127,6 @@ public:
 
     void endDifficulity()
     {
-
-        Texture2D easyButton = LoadTexture("resources/easy.png");     // Load button 1 texture
-        Texture2D mediumButton = LoadTexture("resources/medium.png"); // Load button 2 texture
-        Texture2D hardButton = LoadTexture("resources/hard.png");     // Load button 3 texture
-        Texture2D backButton = LoadTexture("resources/back.png");     // Load button 4 texture
-        Texture2D musicButton = LoadTexture("resources/music.png");   // Load button 5 texture
-        Texture2D guideButton = LoadTexture("resources/guide.png");   // Load button 6 texture
-
-        // Define frame rectangle for drawing
         Rectangle sourceRec = {0, 0, (float)easyButton.width, largeButtonFrameHeight};
         Rectangle sourceRec1 = {0, 0, (float)backButton.width, smallButtonFrameHeight};
 
@@ -1157,19 +1138,12 @@ public:
         Rectangle musicButtonBound = {SCREEN_WIDTH - 120, 30, (float)musicButton.width, smallButtonFrameHeight};
         Rectangle guideButtonBound = {SCREEN_WIDTH - 245, 30, (float)guideButton.width, smallButtonFrameHeight};
 
-        ButtonState btnState1 = IDOL;
-        ButtonState btnState2 = IDOL;
-        ButtonState btnState3 = IDOL;
-        ButtonState btnState4 = IDOL;
-        ButtonState btnState5 = IDOL;
-        ButtonState btnState6 = IDOL;
-
-        bool isEasyButtonPressed = false;   // Button 1 action should be activated
-        bool isMediumButtonPressed = false; // Button 2 action should be activated
-        bool isHardButtonPressed = false;   // Button 3 action should be activated
-        bool isBackButtonPressed = false;   // Button 4 action should be activated
-        bool isMusicButtonPressed = false;  // Button 5 action should be activated
-        bool isGuideButtonPressed = false;  // Button 6 action should be activated
+        ButtonState easyButtonState = IDOL;
+        ButtonState mediumButtonState = IDOL;
+        ButtonState hardButtonState = IDOL;
+        ButtonState backButtonState = IDOL;
+        ButtonState musicButtonState = IDOL;
+        ButtonState guideButtonState = IDOL;
 
         Vector2 mousePoint = {0.0f, 0.0f};
         while (!WindowShouldClose()) // Detect window close button or ESC key
@@ -1189,85 +1163,85 @@ public:
             if (CheckCollisionPointRec(mousePoint, easyButtonBound))
             {
                 if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
-                    btnState1 = PRESSED;
+                    easyButtonState = PRESSED;
                 else
-                    btnState1 = HOVER;
+                    easyButtonState = HOVER;
 
                 if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
                     isEasyButtonPressed = true;
             }
             else
-                btnState1 = IDOL;
+                easyButtonState = IDOL;
 
             // Check button 2 state
             if (CheckCollisionPointRec(mousePoint, mediumButtonBound))
             {
                 if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
-                    btnState2 = PRESSED;
+                    mediumButtonState = PRESSED;
                 else
-                    btnState2 = HOVER;
+                    mediumButtonState = HOVER;
 
                 if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
                     isMediumButtonPressed = true;
             }
             else
-                btnState2 = IDOL;
+                mediumButtonState = IDOL;
 
             // Check button 3 state
             if (CheckCollisionPointRec(mousePoint, hardButtonBound))
             {
                 if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
-                    btnState3 = PRESSED;
+                    hardButtonState = PRESSED;
                 else
-                    btnState3 = HOVER;
+                    hardButtonState = HOVER;
 
                 if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
                     isHardButtonPressed = true;
             }
             else
-                btnState3 = IDOL;
+                hardButtonState = IDOL;
 
             // Check button 4 state
             if (CheckCollisionPointRec(mousePoint, backButtonBound))
             {
                 if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
-                    btnState4 = PRESSED;
+                    backButtonState = PRESSED;
                 else
-                    btnState4 = HOVER;
+                    backButtonState = HOVER;
 
                 if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
                     isBackButtonPressed = true;
             }
             else
-                btnState4 = IDOL;
+                backButtonState = IDOL;
 
             // Check button 5 state
             if (CheckCollisionPointRec(mousePoint, musicButtonBound))
             {
                 if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
-                    btnState5 = PRESSED;
+                    musicButtonState = PRESSED;
                 else
-                    btnState5 = HOVER;
+                    musicButtonState = HOVER;
 
                 if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
                     isMusicButtonPressed = true;
             }
             else
-                btnState5 = IDOL;
+                musicButtonState = IDOL;
 
             // Check button 6 state
             if (CheckCollisionPointRec(mousePoint, guideButtonBound))
             {
                 if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
-                    btnState6 = PRESSED;
+                    guideButtonState = PRESSED;
                 else
-                    btnState6 = HOVER;
+                    guideButtonState = HOVER;
 
                 if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
                     isGuideButtonPressed = true;
             }
             else
-                btnState6 = IDOL;
+                guideButtonState = IDOL;
 
             if (isEasyButtonPressed)
             {
@@ -1319,27 +1293,27 @@ public:
             DrawText("Select Difficulity", SCREEN_WIDTH / 6 - MeasureText("Select Difficulity", 60) / 2, SCREEN_HEIGHT / 3, 60, Yellow);
 
             // Calculate button 1 frame rectangle to draw depending on button 1 state
-            sourceRec.y = btnState1 * largeButtonFrameHeight;
+            sourceRec.y = easyButtonState * largeButtonFrameHeight;
             DrawTextureRec(easyButton, sourceRec, (Vector2){easyButtonBound.x, easyButtonBound.y}, WHITE); // Draw button 1 frame
 
             // Calculate button 2 frame rectangle to draw depending on button 2 state
-            sourceRec.y = btnState2 * largeButtonFrameHeight;
+            sourceRec.y = mediumButtonState * largeButtonFrameHeight;
             DrawTextureRec(mediumButton, sourceRec, (Vector2){mediumButtonBound.x, mediumButtonBound.y}, WHITE); // Draw button 2 frame
 
             // Calculate button 3 frame rectangle to draw depending on button 3 state
-            sourceRec.y = btnState3 * largeButtonFrameHeight;
+            sourceRec.y = hardButtonState * largeButtonFrameHeight;
             DrawTextureRec(hardButton, sourceRec, (Vector2){hardButtonBound.x, hardButtonBound.y}, WHITE); // Draw button 3 frame
 
             // Calculate button 4 frame rectangle to draw depending on button 4 state
-            sourceRec1.y = btnState4 * smallButtonFrameHeight;
+            sourceRec1.y = backButtonState * smallButtonFrameHeight;
             DrawTextureRec(backButton, sourceRec1, (Vector2){backButtonBound.x, backButtonBound.y}, WHITE); // Draw button 4 frame
 
             // Calculate button 5 frame rectangle to draw depending on button 5 state
-            sourceRec1.y = btnState5 * smallButtonFrameHeight;
+            sourceRec1.y = musicButtonState * smallButtonFrameHeight;
             DrawTextureRec(musicButton, sourceRec1, (Vector2){musicButtonBound.x, musicButtonBound.y}, WHITE); // Draw button 5 frame
 
             // Calculate button 6 frame rectangle to draw depending on button 6 state
-            sourceRec1.y = btnState6 * smallButtonFrameHeight;
+            sourceRec1.y = guideButtonState * smallButtonFrameHeight;
             DrawTextureRec(guideButton, sourceRec1, (Vector2){guideButtonBound.x, guideButtonBound.y}, WHITE); // Draw button 6 frame
 
             EndDrawing();
@@ -1348,13 +1322,6 @@ public:
 
     void mode()
     {
-        Texture2D vsCompButton = LoadTexture("resources/vsComp.png");
-        Texture2D vsHumanButton = LoadTexture("resources/vsHuman.png");
-        Texture2D endlessButton = LoadTexture("resources/endless1.png");
-        Texture2D backButton = LoadTexture("resources/back.png");
-        Texture2D musicButton = LoadTexture("resources/music.png");
-        Texture2D guideButton = LoadTexture("resources/guide.png");
-
         Rectangle largeButtonAreaRec = {0, 0, (float)vsCompButton.width, largeButtonFrameHeight};
         Rectangle smallButtonAreaRec = {0, 0, (float)backButton.width, smallButtonFrameHeight};
 
@@ -1461,7 +1428,7 @@ public:
             }
 
             // Check button 6 state
-            if (CheckCollisionPointRec(mousePoint, pauseButtonRec))
+            if (CheckCollisionPointRec(mousePoint, guideButtonRec))
             {
                 if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
                     guideButtonState = PRESSED;
@@ -1547,7 +1514,7 @@ public:
 
             // Calculate button 6 frame rectangle to draw depending on button 6 state
             smallButtonAreaRec.y = guideButtonState * smallButtonFrameHeight;
-            DrawTextureRec(guideButton, smallButtonAreaRec, (Vector2){pauseButtonRec.x, pauseButtonRec.y}, WHITE); // Draw button 6 frame
+            DrawTextureRec(guideButton, smallButtonAreaRec, (Vector2){guideButtonRec.x, guideButtonRec.y}, WHITE); // Draw button 6 frame
 
             EndDrawing();
         }
@@ -1555,10 +1522,6 @@ public:
 
     void start()
     {
-        Texture2D playButton = LoadTexture("resources/play.png");       // Load button 1 texture
-        Texture2D optionsButton = LoadTexture("resources/options.png"); // Load button 2 texture
-        Texture2D exitButton = LoadTexture("resources/exit.png");       // Load button 3 texture
-
         PlayMusicStream(music);
 
         // Define frame rectangle for drawing
@@ -1570,7 +1533,7 @@ public:
 
         Vector2 mousePoint = {0.0f, 0.0f};
 
-        while (!WindowShouldClose())
+        while (true)
         {
             UpdateMusicStream(music);
             mousePoint = GetMousePosition();
@@ -1668,12 +1631,37 @@ public:
             EndDrawing();
         }
     }
+
+    void unload()
+    {
+        UnloadMusicStream(music);
+        UnloadTexture(bg);
+        UnloadTexture(pong);
+        UnloadTexture(ballTexture);
+        UnloadTexture(playButton);
+        UnloadTexture(optionsButton);
+        UnloadTexture(exitButton);
+        UnloadTexture(vsCompButton);
+        UnloadTexture(vsHumanButton);
+        UnloadTexture(endlessButton);
+        UnloadTexture(easyButton);
+        UnloadTexture(mediumButton);
+        UnloadTexture(hardButton);
+        UnloadTexture(backButton);
+        UnloadTexture(musicButton);
+        UnloadTexture(guideButton);
+        UnloadTexture(endles);
+        UnloadTexture(ball.gameBall);
+        UnloadSound(jump);
+        UnloadSound(buttonClickSound);
+
+        CloseAudioDevice();
+        CloseWindow();
+    }
 };
 
 int main()
 {
     Game game;
-    CloseAudioDevice();
-    CloseWindow();
-    return 0;
+    game.unload();
 }
