@@ -54,15 +54,15 @@ Welcome to the Pong Game, a classic arcade experience implemented in C++ using t
 
 1. *Clone the repository:*
     
-    bash
+    ```bash
     git clone https://github.com/ibtasamali04/PongGame.git
-    
+    ```
     
 3. *Navigate to the project directory:*
 
-    bash
+    ```bash
     cd PongGame
-    
+    ```
 
 4. *Build the game using your preferred C++ compiler.*
 
@@ -95,19 +95,19 @@ Welcome to the Pong Game, a classic arcade experience implemented in C++ using t
  
 ## Screenshots
 
-- *Start Window*  
+- *__Start Window__*  
 ![Start](screenshots/start.png)
 
-- *Options Window*
+- *__Options Window__*
 ![Options](screenshots/options.png)
 
-- *Mode Window*
+- *__Mode Window__*
 ![Modes](screenshots/mode.png)
 
-- *Dificulty Window*
+- *__Dificulty Window__*
 ![Difficulties](screenshots/difficulty.png)
 
-- Game*
+- *__Game__*
 ![Pong Game](screenshots/pong.gif)
 
 ## Contributing
