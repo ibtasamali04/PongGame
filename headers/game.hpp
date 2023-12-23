@@ -4,9 +4,9 @@
 #include <iostream>
 #include <functional>
 #include <utility>
-#include "raylib.h"
+#include "src/raylib.h"
 #define RAYGUI_IMPLEMENTATION
-#include "raygui.h"
+#include "src/raygui.h"
 
 #include "headers/ball.hpp"
 #include "headers/paddles.hpp"
@@ -114,6 +114,11 @@ public:
 
         PlayMusicStream(music);
         GuiSetStyle(DEFAULT, TEXT_SIZE, 20);
+        GuiSetStyle(DEFAULT, BASE_COLOR_NORMAL, 0xFFFFFF00);
+        GuiSetStyle(DEFAULT, BORDER_COLOR_NORMAL, 0XF9CC0FFF);
+        GuiSetStyle(DEFAULT, BASE_COLOR_PRESSED, 0XF9CC0FFF);
+
+
 
         loadingScreen(
             150, [this]()

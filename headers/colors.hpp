@@ -1,7 +1,7 @@
 #ifndef COLORS_HPP
 #define COLORS_HPP
 
-#include "raylib.h"
+#include "src/raylib.h"
 
 Color Green = Color{38, 185, 154, 255};
 Color DarkGreen = Color{20, 160, 133, 255};

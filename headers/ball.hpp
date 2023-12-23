@@ -1,7 +1,7 @@
 #ifndef BALL_HPP
 #define BALL_HPP
 
-#include "raylib.h"
+#include "src/raylib.h"
 #include "headers/colors.hpp"
 
 enum ScoreUpdate

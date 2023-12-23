@@ -1,7 +1,7 @@
 #ifndef PADDLES_HPP
 #define PADDLES_HPP
 
-#include "raylib.h"
+#include "src/raylib.h"
 #include "headers/colors.hpp"
 
 class Paddle

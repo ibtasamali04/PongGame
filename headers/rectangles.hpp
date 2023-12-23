@@ -1,7 +1,7 @@
 #ifndef RECTANGLE_HPP
 #define RECTANGLE_HPP
 
-#include "raylib.h"
+#include "src/raylib.h"
 
 const float SCREEN_WIDTH = 1920;
 const float SCREEN_HEIGHT = 1080;
