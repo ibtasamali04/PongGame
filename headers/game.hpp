@@ -118,8 +118,6 @@ public:
         GuiSetStyle(DEFAULT, BORDER_COLOR_NORMAL, 0XF9CC0FFF);
         GuiSetStyle(DEFAULT, BASE_COLOR_PRESSED, 0XF9CC0FFF);
 
-
-
         loadingScreen(
             150, [this]()
             { start(); },
@@ -722,6 +720,7 @@ public:
             DrawText(TextFormat("Player 2 (Left Paddle):"), SCREEN_WIDTH / 12, SCREEN_HEIGHT / 4 + 8 * instructionTextSpace, 30, WHITE);
             DrawText(TextFormat("UP: W"), SCREEN_WIDTH / 8, SCREEN_HEIGHT / 4 + 10 * instructionTextSpace, 30, WHITE);
             DrawText(TextFormat("DOWN: S"), SCREEN_WIDTH / 8, SCREEN_HEIGHT / 4 + 11 * instructionTextSpace, 30, WHITE);
+            DrawText(TextFormat("Pause: P"), SCREEN_WIDTH / 12, SCREEN_HEIGHT / 4 + 13 * instructionTextSpace, 30, WHITE);
 
             DrawText(TextFormat("Press ENTER to return"), SCREEN_WIDTH - MeasureText("Press ENTER to return", 30) - instructionTextSpace, SCREEN_HEIGHT - instructionTextSpace, 30, WHITE);
 
