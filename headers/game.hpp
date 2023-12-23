@@ -49,6 +49,7 @@ private:
     Texture2D mediumButton;
     Texture2D hardButton;
     Texture2D endles;
+    Texture2D resetButton;
     Sound buttonClickSound;
     Sound jump;
 
@@ -73,6 +74,7 @@ public:
     bool isEasyButtonPressed;
     bool isMediumButtonPressed;
     bool isHardButtonPressed;
+    bool isResetButtonPressed;
 
     Game()
     {
@@ -102,6 +104,7 @@ public:
         musicButton = LoadTexture("resources/music.png");
         guideButton = LoadTexture("resources/guide.png");
         endles = LoadTexture("resources/endless.png");
+        resetButton = LoadTexture("resources/reset1.png");
 
         jump = LoadSound("resources/jump.mp3");
         music = LoadMusicStream("resources/music.mp3");
@@ -736,15 +739,11 @@ public:
 
     void optionsScreen()
     {
-
-        Rectangle ballButtonRec = {SCREEN_WIDTH - 850, 605, 200, 30};
-        Rectangle playerButtonRec = {SCREEN_WIDTH - 850, 685, 200, 30};
-        Rectangle scoreButtonRec = {SCREEN_WIDTH - 850, 765, 200, 30};
-        Rectangle resetButtonRec = {SCREEN_WIDTH - 790, 835, 80, 40};
-
         Rectangle sourceRec1 = {0, 0, (float)backButton.width, smallButtonFrameHeight};
 
-        ButtonState backButtonState = IDOL; // Button 4 state: 0-NORMAL, 1-MOUSE_HOVER, 2-PRESSED
+        ButtonState backButtonState = IDOL;
+        ButtonState resetButtonState = IDOL;
+
         Vector2 mousePoint = {0.0f, 0.0f};
 
         while (!WindowShouldClose())
@@ -754,7 +753,8 @@ public:
 
             mousePoint = GetMousePosition();
             isBackButtonPressed = false;
-            // Check button 4 state
+            isResetButtonPressed = false;
+
             if (CheckCollisionPointRec(mousePoint, backButtonRec))
             {
                 if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
@@ -772,6 +772,27 @@ public:
             {
                 PlaySound(buttonClickSound);
                 break;
+            }
+
+            if (CheckCollisionPointRec(mousePoint, resetButtonRec))
+            {
+                if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
+                    resetButtonState = PRESSED;
+                else
+                    resetButtonState = HOVER;
+
+                if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
+                    isResetButtonPressed = true;
+            }
+            else
+                resetButtonState = IDOL;
+
+            if (isResetButtonPressed)
+            {
+                PlaySound(buttonClickSound);
+                playerSpeed = 10;
+                ballSpeed = 10;
+                scoretemp = 10;
             }
 
             ClearBackground(Blue);
@@ -794,6 +815,8 @@ public:
             // Calculate button 4 frame rectangle to draw depending on button 4 state
             sourceRec1.y = backButtonState * smallButtonFrameHeight;
             DrawTextureRec(backButton, sourceRec1, (Vector2){backButtonRec.x, backButtonRec.y}, WHITE); // Draw button 4 frame
+            sourceRec1.y = resetButtonState * smallButtonFrameHeight;
+            DrawTextureRec(resetButton, sourceRec1, (Vector2){resetButtonRec.x, resetButtonRec.y}, WHITE); // Draw button 4 frame
 
             optionsTwoPlayerInstructionTextX += optionsTwoPlayerInstructionTextSpeedX;
 
@@ -803,11 +826,6 @@ public:
             }
 
             DrawText(TextFormat("Speed settings are only for Two Player Pong"), optionsTwoPlayerInstructionTextX, SCREEN_HEIGHT - 30, 20, WHITE);
-
-            /*if (GuiButton(backbuttonRec, "BACK")) {
-            break;
-            }*/
-
             GuiSliderBar(ballButtonRec, NULL, NULL, &ballSpeed, 0, 25);
 
             GuiSliderBar(playerButtonRec, NULL, NULL, &playerSpeed, 0, 25);
@@ -815,14 +833,6 @@ public:
             GuiSliderBar(scoreButtonRec, NULL, NULL, &scoretemp, 0, 50);
 
             score = (int)scoretemp;
-
-            if (GuiButton(resetButtonRec, "Reset"))
-            {
-
-                playerSpeed = 10;
-                ballSpeed = 10;
-                scoretemp = 10;
-            }
 
             EndDrawing();
         }
@@ -1654,6 +1664,7 @@ public:
         UnloadTexture(musicButton);
         UnloadTexture(guideButton);
         UnloadTexture(endles);
+        UnloadTexture(resetButton);
         UnloadTexture(ball.gameBall);
         UnloadSound(jump);
         UnloadSound(buttonClickSound);
@@ -1662,7 +1673,5 @@ public:
         CloseWindow();
     }
 };
-
-
 
 #endif

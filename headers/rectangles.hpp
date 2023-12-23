@@ -21,4 +21,9 @@ Rectangle backButtonRec = {5, 30, smallButtonWidth, smallButtonFrameHeight};
 Rectangle guideButtonRec = {SCREEN_WIDTH - 245, 30, smallButtonWidth, smallButtonFrameHeight};
 Rectangle musicButtonRec = {SCREEN_WIDTH - 120, 30, smallButtonWidth, smallButtonFrameHeight};
 
+Rectangle ballButtonRec = {SCREEN_WIDTH - 850, 605, 200, 30};
+Rectangle playerButtonRec = {SCREEN_WIDTH - 850, 685, 200, 30};
+Rectangle scoreButtonRec = {SCREEN_WIDTH - 850, 765, 200, 30};
+Rectangle resetButtonRec = {SCREEN_WIDTH - 810, 835, smallButtonWidth, smallButtonFrameHeight};
+
 #endif
