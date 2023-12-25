@@ -142,25 +142,23 @@ public:
             ResumeMusicStream(music);
     }
 
-    void versesComputerMode(int ballspeedx, int ballspeedy, int playerspeed, int cpuspeed)
+    void versesComputerMode(int ballSpeedX, int ballSpeedY, int playerSpeed, int cpuSpeed)
     {
         ball.radius = 20;
-        ball.x = SCREEN_WIDTH / 2;
-        ball.y = SCREEN_HEIGHT / 2;
-        ball.speed_x = ballspeedx;
-        ball.speed_y = ballspeedx;
+        ball.speed_x = ballSpeedX;
+        ball.speed_y = ballSpeedY;
 
         player1Paddle.width = 30;
         player1Paddle.height = 140;
         player1Paddle.x = SCREEN_WIDTH - player1Paddle.width - 10;
         player1Paddle.y = SCREEN_HEIGHT / 2 - player1Paddle.height / 2;
-        player1Paddle.speed = ballspeedx;
+        player1Paddle.speed = ballSpeedX;
 
         cpuPaddle.height = 140;
         cpuPaddle.width = 30;
         cpuPaddle.x = 10;
         cpuPaddle.y = SCREEN_HEIGHT / 2 - cpuPaddle.height / 2;
-        cpuPaddle.speed = cpuspeed;
+        cpuPaddle.speed = cpuSpeed;
 
         Rectangle sourceRec1 = {0, 0, (float)backButton.width, smallButtonFrameHeight};
 
@@ -172,6 +170,7 @@ public:
 
         while (true)
         {
+            UpdateMusicStream(music);
             if (IsKeyPressed(KEY_P))
             {
                 pauseGame = !pauseGame;
@@ -257,8 +256,6 @@ public:
                 }
 
                 BeginDrawing();
-                UpdateMusicStream(music);
-                ResumeMusicStream(music);
 
                 // Updating
                 ScoreUpdate update = ball.Update();
@@ -320,26 +317,25 @@ public:
         }
     }
 
-    void endlessMode(int ballspeedx, int ballspeedy, int playerspeed, int cpuspeed)
+    void endlessMode(int ballSpeedX, int ballSpeedY, int playerSpeed, int cpuSpeed)
     {
-
         ball.radius = 20;
         ball.x = SCREEN_WIDTH / 2;
         ball.y = SCREEN_HEIGHT / 2;
-        ball.speed_x = ballspeedx;
-        ball.speed_y = ballspeedx;
+        ball.speed_x = ballSpeedX;
+        ball.speed_y = ballSpeedY;
 
         player1Paddle.width = 30;
         player1Paddle.height = 140;
         player1Paddle.x = SCREEN_WIDTH - player1Paddle.width - 10;
         player1Paddle.y = SCREEN_HEIGHT / 2 - player1Paddle.height / 2;
-        player1Paddle.speed = ballspeedx;
+        player1Paddle.speed = ballSpeedX;
 
         cpuPaddle.height = 140;
         cpuPaddle.width = 30;
         cpuPaddle.x = 10;
         cpuPaddle.y = SCREEN_HEIGHT / 2 - cpuPaddle.height / 2;
-        cpuPaddle.speed = cpuspeed;
+        cpuPaddle.speed = cpuSpeed;
 
         Rectangle sourceRec1 = {0, 0, (float)backButton.width, smallButtonFrameHeight};
 
@@ -351,6 +347,7 @@ public:
 
         while (true)
         {
+            UpdateMusicStream(music);
             if (IsKeyPressed(KEY_P))
             {
                 pauseGame = !pauseGame;
@@ -430,10 +427,6 @@ public:
                 }
 
                 BeginDrawing();
-
-                UpdateMusicStream(music);
-                ResumeMusicStream(music);
-
                 // Updating
 
                 ScoreUpdate update = ball.Update();
@@ -519,6 +512,7 @@ public:
 
         while (true)
         {
+            UpdateMusicStream(music);
             if (IsKeyPressed(KEY_P))
             {
                 pauseGame = !pauseGame;
@@ -598,9 +592,6 @@ public:
                 }
 
                 BeginDrawing();
-                UpdateMusicStream(music);
-                ResumeMusicStream(music);
-
                 // Updating
 
                 ScoreUpdate update = ball.Update();
@@ -1538,8 +1529,6 @@ public:
 
     void start()
     {
-        PlayMusicStream(music);
-
         // Define frame rectangle for drawing
         Rectangle sourceRec = {0, 0, (float)playButton.width, largeButtonFrameHeight};
 
