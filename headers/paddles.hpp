@@ -2,6 +2,8 @@
 #define PADDLES_HPP
 
 #include "src/raylib.h"
+#define RAYGUI_IMPLEMENTATION
+#include "src/raygui.h"
 #include "headers/colors.hpp"
 
 class Paddle

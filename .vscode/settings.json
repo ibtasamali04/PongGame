@@ -11,6 +11,7 @@
 	"files.associations": {
 		"memory": "cpp",
 		"random": "cpp",
-		"utility": "cpp"
+		"utility": "cpp",
+		"functional": "cpp"
 	}
 }

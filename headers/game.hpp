@@ -1,13 +1,10 @@
 #ifndef GAME_HPP
 #define GAME_HPP
-
+// import library
 #include <iostream>
 #include <functional>
 #include <utility>
-#include "src/raylib.h"
-#define RAYGUI_IMPLEMENTATION
-#include "src/raygui.h"
-
+// import header files
 #include "headers/ball.hpp"
 #include "headers/paddles.hpp"
 #include "headers/rectangles.hpp"
@@ -15,16 +12,17 @@
 float playerSpeed = 10;
 float ballSpeed = 10;
 float instructionTextSpace = 50;
-int score = 10;
-float scoretemp = 10;
+int winScore = 10;
+float tempWinScore = 10;
 
-enum ButtonState
+enum ButtonState // for button state
 {
     IDOL = 0,
     HOVER = 1,
     PRESSED = 2
 };
 
+// instances for paddles
 Paddle player1Paddle(KEY_UP, KEY_DOWN);
 Paddle player2Paddle(KEY_W, KEY_S);
 CpuPaddle cpuPaddle;
@@ -32,6 +30,7 @@ CpuPaddle cpuPaddle;
 class Game
 {
 private:
+    // texture and sound variable
     Music music;
     Texture2D bg;
     Texture2D pong;
@@ -52,14 +51,13 @@ private:
     Texture2D resetButton;
     Sound buttonClickSound;
     Sound jump;
+    Ball ball; // object for ball
 
-public:
-    int optionsTwoPlayerInstructionTextX = 480;
+    int optionsTwoPlayerInstructionTextX = 480; // text movement in option screen
     int optionsTwoPlayerInstructionTextSpeedX = 2;
-    int playerScore;
+    int playerScore; // score variables
     int cpuScore;
-    Ball ball;
-
+    // bools for buttons
     bool pauseGame;
     bool pauseMusic;
     bool isBackButtonPressed;
@@ -76,6 +74,7 @@ public:
     bool isHardButtonPressed;
     bool isResetButtonPressed;
 
+public:
     Game()
     {
         pauseMusic = false;
@@ -83,11 +82,11 @@ public:
         playerScore = 0;
         cpuScore = 0;
 
-        InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Pong Game");
-        InitAudioDevice();
-        SetTargetFPS(60);
-        ToggleFullscreen();
-
+        InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Pong Game"); // initialize window
+        InitAudioDevice();                                    // initialize audio device
+        SetTargetFPS(60);                                     // set fps
+        ToggleFullscreen();                                   // enter full screen
+        // load texture
         bg = LoadTexture("resources/bg.png");
         pong = LoadTexture("resources/pong 1.png");
         ballTexture = LoadTexture("resources/pong 2.png");
@@ -310,7 +309,7 @@ public:
                 sourceRec1.y = guideButtonState * smallButtonFrameHeight;
                 DrawTextureRec(guideButton, sourceRec1, (Vector2){guideButtonRec.x, guideButtonRec.y}, WHITE); // Draw button 6 frame
 
-                if (cpuScore >= score || playerScore >= score)
+                if (cpuScore >= winScore || playerScore >= winScore)
                 {
 
                     versesComputerWinScreen();
@@ -653,7 +652,7 @@ public:
                 sourceRec1.y = guideButtonState * smallButtonFrameHeight;
                 DrawTextureRec(guideButton, sourceRec1, (Vector2){guideButtonRec.x, guideButtonRec.y}, WHITE); // Draw button 6 frame
 
-                if (cpuScore >= score || playerScore >= score)
+                if (cpuScore >= winScore || playerScore >= winScore)
                 {
                     versesHumanWinScreen();
                 }
@@ -796,7 +795,7 @@ public:
                 PlaySound(buttonClickSound);
                 playerSpeed = 10;
                 ballSpeed = 10;
-                scoretemp = 10;
+                tempWinScore = 10;
             }
 
             ClearBackground(Blue);
@@ -814,7 +813,7 @@ public:
 
             DrawText(TextFormat("%i", (int)ballSpeed), SCREEN_WIDTH - 630, 610, 20, WHITE);
             DrawText(TextFormat("%i", (int)playerSpeed), SCREEN_WIDTH - 630, 690, 20, WHITE);
-            DrawText(TextFormat("%i", score), SCREEN_WIDTH - 630, 770, 20, WHITE);
+            DrawText(TextFormat("%i", winScore), SCREEN_WIDTH - 630, 770, 20, WHITE);
 
             // Calculate button 4 frame rectangle to draw depending on button 4 state
             sourceRec1.y = backButtonState * smallButtonFrameHeight;
@@ -834,9 +833,9 @@ public:
 
             GuiSliderBar(playerButtonRec, NULL, NULL, &playerSpeed, 0, 25);
 
-            GuiSliderBar(scoreButtonRec, NULL, NULL, &scoretemp, 0, 50);
+            GuiSliderBar(scoreButtonRec, NULL, NULL, &tempWinScore, 0, 50);
 
-            score = (int)scoretemp;
+            winScore = (int)tempWinScore;
 
             EndDrawing();
         }
@@ -846,7 +845,7 @@ public:
     {
         Texture2D bg = LoadTexture("resources/bg.png");
 
-        if (playerScore >= score)
+        if (playerScore >= winScore)
         {
 
             while (!WindowShouldClose())
@@ -872,7 +871,7 @@ public:
 
             reset();
         }
-        else if (cpuScore >= score)
+        else if (cpuScore >= winScore)
         {
 
             while (true)
@@ -904,7 +903,7 @@ public:
     {
         Texture2D bg = LoadTexture("resources/bg.png");
 
-        if (playerScore >= score)
+        if (playerScore >= winScore)
         {
 
             while (!WindowShouldClose())
@@ -928,7 +927,7 @@ public:
             }
             reset();
         }
-        else if (cpuScore >= score)
+        else if (cpuScore >= winScore)
         {
 
             while (true)
