@@ -10,6 +10,7 @@ Welcome to the Pong Game, a classic arcade experience implemented in C++ using t
 - [How to Play](#how-to-play)
 - [Controls](#controls)
 - [Screenshots](#screenshots)
+- [Credits](#credits)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -109,6 +110,10 @@ Welcome to the Pong Game, a classic arcade experience implemented in C++ using t
 
 - *__Game__*
 ![Pong Game](screenshots/pong.gif)
+
+## Credits
+
+  - Basic game logic [educ8s](https://github.com/educ8s/Cpp-Pong-Game-Raylib).
 
 ## Contributing
 

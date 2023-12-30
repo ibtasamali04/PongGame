@@ -9,18 +9,6 @@
 class Paddle
 {
 public:
-    void LimitMovement()
-    {
-        if (y <= 0)
-        {
-            y = 0;
-        }
-        if (y + height >= GetScreenHeight())
-        {
-            y = GetScreenHeight() - height;
-        }
-    }
-
     float x, y;
     float width, height;
     int speed;
@@ -32,6 +20,18 @@ public:
     {
         this->upKey = upKey;
         this->downKey = downKey;
+    }
+
+    void LimitMovement()
+    {
+        if (y <= 0)
+        {
+            y = 0;
+        }
+        if (y + height >= GetScreenHeight())
+        {
+            y = GetScreenHeight() - height;
+        }
     }
 
     void Draw()

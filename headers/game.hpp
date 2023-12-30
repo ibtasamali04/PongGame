@@ -115,7 +115,7 @@ public:
         GuiSetStyle(DEFAULT, TEXT_SIZE, 20);
         GuiSetStyle(DEFAULT, BASE_COLOR_NORMAL, 0xFFFFFF00);
         GuiSetStyle(DEFAULT, BORDER_COLOR_NORMAL, 0XF9CC0FFF);
-        GuiSetStyle(DEFAULT, BASE_COLOR_PRESSED, 0XF9CC0FFF);
+        GuiSetStyle(DEFAULT, BASE_COLOR_PRESSED, 0XFC9C0FFF);
 
         loadingScreen(
             150, [this]()
@@ -177,6 +177,7 @@ public:
             }
 
             if (pauseGame)
+            
             {
                 pauseScreen();
             }
@@ -1664,6 +1665,7 @@ public:
         CloseAudioDevice();
         CloseWindow();
     }
+
 };
 
 #endif
